@@ -43,7 +43,7 @@ if (subcommand === "read") {
 
     const pets = JSON.parse(string);
     const newPet = { age, kind, name };
-    if (Number.isNaN(age) || kind == "" || name == "") {
+    if (Number.isNaN(age) || kind == undefined || name == undefined) {
       console.error("Usage: create AGE KIND NAME");
       process.exit(1);
     } else {
