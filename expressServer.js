@@ -1,3 +1,4 @@
+import { error } from "console";
 import express from "express";
 import fs from "fs";
 
@@ -5,12 +6,14 @@ const app = express();
 const port = 3000;
 
 app.use(express.json());
+app.use((err, req, res, next) => {
+  res.status(500).send("Internal servor error");
+});
 
-app.get("/pets", (req, res) => {
+app.get("/pets", (req, res, next) => {
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
-      return;
+      next(err);
     }
 
     const pets = JSON.parse(str);
@@ -20,7 +23,7 @@ app.get("/pets", (req, res) => {
   });
 });
 
-app.get("/pets/:index", (req, res) => {
+app.get("/pets/:index", (req, res, next) => {
   const index = parseInt(req.params.index);
 
   if (isNaN(index)) {
@@ -30,7 +33,7 @@ app.get("/pets/:index", (req, res) => {
 
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      next(err);
       return;
     }
 
@@ -46,7 +49,7 @@ app.get("/pets/:index", (req, res) => {
   });
 });
 
-app.post("/pets", (req, res) => {
+app.post("/pets", (req, res, next) => {
   const newPet = req.body;
   if (!newPet || !newPet.name || !newPet.kind || !newPet.age) {
     res.status(400).send("Invalid pet data");
@@ -54,7 +57,7 @@ app.post("/pets", (req, res) => {
   }
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      next(err);
       return;
     }
 
@@ -64,7 +67,7 @@ app.post("/pets", (req, res) => {
 
     fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
       if (err) {
-        res.status(500).end();
+        next(err);
         return;
       }
 
@@ -74,7 +77,7 @@ app.post("/pets", (req, res) => {
   });
 });
 
-app.delete("/pets/:index", (req, res) => {
+app.delete("/pets/:index", (req, res, next) => {
   const index = parseInt(req.params.index);
 
   if (isNaN(index)) {
@@ -83,7 +86,7 @@ app.delete("/pets/:index", (req, res) => {
 
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      next(err);
     }
     const pets = JSON.parse(str);
 
@@ -105,7 +108,7 @@ app.delete("/pets/:index", (req, res) => {
   });
 });
 
-app.put("/pets/:index", (req, res) => {
+app.put("/pets/:index", (req, res, next) => {
   const index = parseInt(req.params.index);
 
   if (isNaN(index)) {
@@ -119,7 +122,7 @@ app.put("/pets/:index", (req, res) => {
   }
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      next(err);
       return;
     }
 
@@ -134,12 +137,13 @@ app.put("/pets/:index", (req, res) => {
 
     fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
       if (err) {
-        res.status(500).end();
+        next(err);
         return;
       }
 
       res.setHeader("Content-Type", "application/json");
       res.send(updatedPet);
+      console.log("Success!");
     });
   });
 });
