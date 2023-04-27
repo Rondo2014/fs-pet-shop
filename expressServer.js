@@ -4,10 +4,12 @@ import fs from "fs";
 const app = express();
 const port = 3000;
 
+app.use(express.json());
+
 app.get("/pets", (req, res) => {
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      res.status(500).next();
       return;
     }
 
@@ -28,7 +30,7 @@ app.get("/pets/:index", (req, res) => {
 
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).end();
+      res.status(500).next();
       return;
     }
 
@@ -41,6 +43,35 @@ app.get("/pets/:index", (req, res) => {
 
     res.setHeader("Content-Type", "application/json");
     res.send(pets[index]);
+  });
+});
+
+app.post("/pets", (req, res) => {
+  const newPet = req.body;
+  console.log(newPet);
+  if (!newPet || !newPet.name || !newPet.kind || !newPet.age) {
+    res.status(400).send("Invalid pet data");
+    return;
+  }
+  fs.readFile("pets.json", "utf-8", (err, str) => {
+    if (err) {
+      res.status(500).end();
+      return;
+    }
+
+    const pets = JSON.parse(str);
+
+    pets.push(newPet);
+
+    fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
+      if (err) {
+        res.status(500).next();
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/json");
+      res.send(newPet);
+    });
   });
 });
 
