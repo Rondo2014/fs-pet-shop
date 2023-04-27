@@ -9,7 +9,7 @@ app.use(express.json());
 app.get("/pets", (req, res) => {
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).next();
+      res.status(500).end();
       return;
     }
 
@@ -30,7 +30,7 @@ app.get("/pets/:index", (req, res) => {
 
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).next();
+      res.status(500).end();
       return;
     }
 
@@ -64,7 +64,7 @@ app.post("/pets", (req, res) => {
 
     fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
       if (err) {
-        res.status(500).next();
+        res.status(500).end();
         return;
       }
 
@@ -83,7 +83,7 @@ app.delete("/pets/:index", (req, res) => {
 
   fs.readFile("pets.json", "utf-8", (err, str) => {
     if (err) {
-      res.status(500).next();
+      res.status(500).end();
     }
     const pets = JSON.parse(str);
 
