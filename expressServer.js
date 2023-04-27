@@ -105,6 +105,45 @@ app.delete("/pets/:index", (req, res) => {
   });
 });
 
+app.put("/pets/:index", (req, res) => {
+  const index = parseInt(req.params.index);
+
+  if (isNaN(index)) {
+    res.status(400).send("Invalid index");
+    return;
+  }
+  const updatedPet = req.body;
+  if (!updatedPet || !updatedPet.name || !updatedPet.kind || !updatedPet.age) {
+    res.status(400).send("Invalid pet data");
+    return;
+  }
+  fs.readFile("pets.json", "utf-8", (err, str) => {
+    if (err) {
+      res.status(500).end();
+      return;
+    }
+
+    const pets = JSON.parse(str);
+
+    if (index < 0 || index >= pets.length) {
+      res.status(404).send("Not Found");
+      return;
+    }
+
+    pets[index] = updatedPet;
+
+    fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
+      if (err) {
+        res.status(500).end();
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/json");
+      res.send(updatedPet);
+    });
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
