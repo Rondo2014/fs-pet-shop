@@ -1,4 +1,3 @@
-import { error } from "console";
 import express from "express";
 import fs from "fs";
 
@@ -134,6 +133,49 @@ app.put("/pets/:index", (req, res, next) => {
     }
 
     pets[index] = updatedPet;
+
+    fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
+      if (err) {
+        next(err);
+        return;
+      }
+
+      res.setHeader("Content-Type", "application/json");
+      res.send(updatedPet);
+      console.log("Success!");
+    });
+  });
+});
+
+app.patch("/pets/:index", (req, res, next) => {
+  const index = parseInt(req.params.index);
+
+  if (isNaN(index)) {
+    res.status(400).send("Invalid index");
+    return;
+  }
+  const updatedPet = req.body;
+  if (!updatedPet) {
+    res.status(400).send("Invalid pet data");
+    return;
+  }
+  fs.readFile("pets.json", "utf-8", (err, str) => {
+    if (err) {
+      next(err);
+      return;
+    }
+
+    const pets = JSON.parse(str);
+
+    if (index < 0 || index >= pets.length) {
+      res.status(404).send("Not Found");
+      return;
+    }
+
+    const pet = pets[index];
+    const mergedPet = Object.assign({}, pet, updatedPet);
+
+    pets[index] = mergedPet;
 
     fs.writeFile("pets.json", JSON.stringify(pets), (err) => {
       if (err) {
