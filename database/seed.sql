@@ -6,3 +6,4 @@ VALUES('Samson', 8, 'Bird Boi');
 
 INSERT INTO petsTable(name, age, kind)
 VALUES('Ace', 3, 'Dog');
+

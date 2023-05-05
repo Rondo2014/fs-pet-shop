@@ -2,7 +2,7 @@ import express from "express";
 import postgres from "postgres";
 
 // connection to database pets
-const sql = postgres("postgres://jovi:123@localhost:5432/pets");
+export const sql = postgres("postgres://jovi:123@localhost:5432/pets");
 
 const app = express();
 app.use(express.json());
@@ -15,8 +15,7 @@ app.use((err, req, res, next) => {
 export const getAllPets = async (req, res, next) => {
   try {
     const pets = await sql`SELECT * FROM petsTable;`;
-    res.setHeader("Content-Type", "application/json");
-    res.status(200).send(pets);
+    res.setHeader("Content-Type", "application/json").status(200).send(pets);
   } catch (err) {
     next(err);
   }
@@ -30,9 +29,8 @@ export const addPet = async (req, res, next) => {
   }
   try {
     const pets = await sql`INSERT INTO petsTable (name, kind, age)
-    VALUES (${newPet.name}, ${newPet.kind}, ${newPet.age})`;
-    res.setHeader("Content-Type", "application/json");
-    res.status(201).send(pets[0]);
+    VALUES (${newPet.name}, ${newPet.kind}, ${newPet.age}) RETURNING *`;
+    res.setHeader("Content-Type", "application/json").status(201).send(pets[0]);
   } catch (err) {
     next(err);
   }
@@ -52,8 +50,7 @@ export const getPet = async (req, res, next) => {
       res.status(404).send("Not found");
       return;
     }
-    res.setHeader("Content-Type", "application/json");
-    res.send(pets[0]);
+    res.setHeader("Content-Type", "application/json").send(pets[0]);
   } catch (err) {
     next(err);
   }
@@ -72,8 +69,9 @@ export const deletePet = async (req, res, next) => {
     if (pets.length === 0) {
       res.status(404).send("Not found");
     }
-    res.setHeader("Content-Type", "application/json");
-    res.send(pets[0]);
+    res
+      .setHeader("Content-Type", "application/json")
+      .send(pets[0], "pet deleted");
   } catch (err) {
     next(err);
   }
@@ -82,8 +80,17 @@ export const deletePet = async (req, res, next) => {
 export const updatePet = async (req, res, next) => {
   const index = Number(req.params.id);
   const updatedPet = req.body;
+  console.log(updatedPet);
 
   if (isNaN(index)) {
+    res.status(400).send("invalid pet data");
+    return;
+  }
+  const keys = ["name", "age", "kind"];
+  const hasKeys = Object.keys(updatedPet).some((key) => {
+    return keys.includes(key);
+  });
+  if (!hasKeys) {
     res.status(400).send("invalid pet data");
     return;
   }
@@ -98,8 +105,7 @@ export const updatePet = async (req, res, next) => {
     }
     const mergedPet = Object.assign({}, pets[0], updatedPet);
     await sql`UPDATE petsTable SET name = ${mergedPet.name}, kind = ${mergedPet.kind}, age = ${mergedPet.age} WHERE id =${index}`;
-    res.setHeader("Content-Type", "application/json");
-    res.send(mergedPet);
+    res.setHeader("Content-Type", "application/json").send(mergedPet);
   } catch (err) {
     next(err);
   }
