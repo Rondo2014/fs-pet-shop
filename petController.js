@@ -6,10 +6,12 @@ const sql = postgres("postgres://jovi:123@localhost:5432/pets");
 
 const app = express();
 app.use(express.json());
+// error handler
 app.use((err, req, res, next) => {
   res.status(500).send("Internal servor error");
 });
 
+// pet routes for router middleware
 export const getAllPets = async (req, res, next) => {
   try {
     const pets = await sql`SELECT * FROM petsTable;`;
