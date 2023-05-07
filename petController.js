@@ -1,11 +1,17 @@
 import express from "express";
-import postgres from "postgres";
+import pg from "pg";
 
-// connection to database pets
-export const sql = postgres("postgres://jovi:123@localhost:5432/pets");
+const pool = new pg.Pool({
+  user: "jovi",
+  host: "localhost",
+  database: "pets",
+  password: "123",
+  port: 5432,
+});
 
 const app = express();
 app.use(express.json());
+
 // error handler
 app.use((err, req, res, next) => {
   res.status(500).send("Internal servor error");
@@ -14,8 +20,11 @@ app.use((err, req, res, next) => {
 // pet routes for router middleware
 export const getAllPets = async (req, res, next) => {
   try {
-    const pets = await sql`SELECT * FROM petsTable;`;
-    res.setHeader("Content-Type", "application/json").status(200).send(pets);
+    const pets = await pool.query(`SELECT * FROM petsTable;`);
+    res
+      .setHeader("Content-Type", "application/json")
+      .status(200)
+      .send(pets.rows);
   } catch (err) {
     next(err);
   }
@@ -28,9 +37,15 @@ export const addPet = async (req, res, next) => {
     return;
   }
   try {
-    const pets = await sql`INSERT INTO petsTable (name, kind, age)
-    VALUES (${newPet.name}, ${newPet.kind}, ${newPet.age}) RETURNING *`;
-    res.setHeader("Content-Type", "application/json").status(201).send(pets[0]);
+    const pets = await pool.query(
+      `INSERT INTO petsTable (name, kind, age)
+    VALUES ($1, $2, $3) RETURNING *`,
+      [newPet.name, newPet.kind, newPet.age]
+    );
+    res
+      .setHeader("Content-Type", "application/json")
+      .status(201)
+      .send(pets.rows[0]);
   } catch (err) {
     next(err);
   }
@@ -38,19 +53,21 @@ export const addPet = async (req, res, next) => {
 
 export const getPet = async (req, res, next) => {
   const index = Number(req.params.id);
-  console.log(index);
 
   if (isNaN(index)) {
     res.status(400).send("Invalid index");
     return;
   }
   try {
-    const pets = await sql`SELECT * FROM petsTable WHERE id =${index}`;
-    if (pets.length === 0 || pets.length === undefined) {
+    const pets = await pool.query(`SELECT * FROM petsTable WHERE id =$1`, [
+      index,
+    ]);
+    console.log(pets);
+    if (pets.rows.length === 0 || pets.rows.length === undefined) {
       res.status(404).send("Not found");
       return;
     }
-    res.setHeader("Content-Type", "application/json").send(pets[0]);
+    res.setHeader("Content-Type", "application/json").send(pets.rows[0]);
   } catch (err) {
     next(err);
   }
@@ -58,20 +75,21 @@ export const getPet = async (req, res, next) => {
 
 export const deletePet = async (req, res, next) => {
   const index = Number(req.params.id);
-  console.log(index);
 
   if (isNaN(index)) {
     res.status(400).send("Invalid index");
     return;
   }
   try {
-    const pets = await sql`DELETE FROM petsTable WHERE id =${index}`;
-    if (pets.length === 0) {
+    const pets = await pool.query(`DELETE FROM petsTable WHERE id =$1`, [
+      index,
+    ]);
+    if (pets.rows.length === 0) {
       res.status(404).send("Not found");
     }
     res
       .setHeader("Content-Type", "application/json")
-      .send(pets[0], "pet deleted");
+      .send(pets.rows[0], "pet deleted");
   } catch (err) {
     next(err);
   }
@@ -95,15 +113,17 @@ export const updatePet = async (req, res, next) => {
     return;
   }
   try {
-    const pets = await sql`SELECT * FROM petsTable WHERE id =${index}`;
-    if (pets.length === 0) {
+    const pets = await pool.query(`SELECT * FROM petsTable WHERE id =$1`, [
+      index,
+    ]);
+    if (pets.rows.length === 0) {
       res.status(404).send("Not found");
     }
-    if (!pets[0]) {
+    if (!pets.rows[0]) {
       res.status(404).send("Not found");
       return;
     }
-    const mergedPet = Object.assign({}, pets[0], updatedPet);
+    const mergedPet = Object.assign({}, pets.rows[0], updatedPet);
     await sql`UPDATE petsTable SET name = ${mergedPet.name}, kind = ${mergedPet.kind}, age = ${mergedPet.age} WHERE id =${index}`;
     res.setHeader("Content-Type", "application/json").send(mergedPet);
   } catch (err) {

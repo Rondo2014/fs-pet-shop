@@ -1,9 +1,17 @@
 import express from "express";
 import router from "./petRoutes.js";
 import bcrypt from "bcrypt";
-import { sql } from "./petController.js";
+import pg from "pg";
 
 const app = express();
+const pool = new pg.Pool({
+  user: "jovi",
+  host: "localhost",
+  database: "pets",
+  password: "123",
+  port: 5432,
+});
+
 app.use(express.json());
 
 app.post("/users", async (req, res) => {
@@ -16,7 +24,10 @@ app.post("/users", async (req, res) => {
 
   try {
     // Insert the user into the database
-    await sql`INSERT INTO userTable (username, password) VALUES (${username}, ${passwordHash})`;
+    await pool.query(
+      `INSERT INTO userTable (username, password) VALUES ($1, $2)`,
+      [username, passwordHash]
+    );
 
     res.status(201).send("User created successfully");
   } catch (err) {
@@ -38,8 +49,11 @@ const auth = async (req, res, next) => {
   const password = credentials[1];
 
   try {
-    const user = await sql`SELECT * FROM userTable WHERE username=${username}`;
-    if (!user || !(await bcrypt.compare(password, user[0].password))) {
+    const user = await pool.query(`SELECT * FROM userTable WHERE username=$1`, [
+      username,
+    ]);
+    console.log(user);
+    if (!user || !(await bcrypt.compare(password, user.rows[0].password))) {
       return res.status(401).send("Invalid username or password");
     }
     req.user = user;
