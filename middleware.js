@@ -52,14 +52,12 @@ const auth = async (req, res, next) => {
     const user = await pool.query(`SELECT * FROM userTable WHERE username=$1`, [
       username,
     ]);
-    console.log(user);
     if (!user || !(await bcrypt.compare(password, user.rows[0].password))) {
       return res.status(401).send("Invalid username or password");
     }
     req.user = user;
     next();
   } catch (err) {
-    console.log(err);
     return res.status(500).send("Invalid username or password");
   }
 };

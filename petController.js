@@ -62,7 +62,6 @@ export const getPet = async (req, res, next) => {
     const pets = await pool.query(`SELECT * FROM petsTable WHERE id =$1`, [
       index,
     ]);
-    console.log(pets);
     if (pets.rows.length === 0 || pets.rows.length === undefined) {
       res.status(404).send("Not found");
       return;
@@ -98,7 +97,6 @@ export const deletePet = async (req, res, next) => {
 export const updatePet = async (req, res, next) => {
   const index = Number(req.params.id);
   const updatedPet = req.body;
-  console.log(updatedPet);
 
   if (isNaN(index)) {
     res.status(400).send("invalid pet data");
@@ -124,7 +122,10 @@ export const updatePet = async (req, res, next) => {
       return;
     }
     const mergedPet = Object.assign({}, pets.rows[0], updatedPet);
-    await sql`UPDATE petsTable SET name = ${mergedPet.name}, kind = ${mergedPet.kind}, age = ${mergedPet.age} WHERE id =${index}`;
+    await pool.query(
+      `UPDATE petsTable SET name =$1, kind =$2, age =$3 WHERE id =$4`,
+      [mergedPet.name, mergedPet.kind, mergedPet.age, index]
+    );
     res.setHeader("Content-Type", "application/json").send(mergedPet);
   } catch (err) {
     next(err);
