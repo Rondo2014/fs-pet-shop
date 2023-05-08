@@ -36,6 +36,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
+// auth middleware to check credentials before running router middleware
 const auth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -61,6 +62,7 @@ const auth = async (req, res, next) => {
     return res.status(500).send("Invalid username or password");
   }
 };
+
 app.use("/pets", auth, router);
 
 export default app;

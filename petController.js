@@ -1,6 +1,7 @@
 import express from "express";
 import pg from "pg";
 
+// reference for database to access
 const pool = new pg.Pool({
   user: "jovi",
   host: "localhost",
@@ -54,7 +55,7 @@ export const addPet = async (req, res, next) => {
 export const getPet = async (req, res, next) => {
   const index = Number(req.params.id);
 
-  if (isNaN(index)) {
+  if (isNaN(index) || index < 0) {
     res.status(400).send("Invalid index");
     return;
   }
@@ -75,7 +76,7 @@ export const getPet = async (req, res, next) => {
 export const deletePet = async (req, res, next) => {
   const index = Number(req.params.id);
 
-  if (isNaN(index)) {
+  if (isNaN(index) || index < 0) {
     res.status(400).send("Invalid index");
     return;
   }
@@ -98,7 +99,7 @@ export const updatePet = async (req, res, next) => {
   const index = Number(req.params.id);
   const updatedPet = req.body;
 
-  if (isNaN(index)) {
+  if (isNaN(index) || index < 0) {
     res.status(400).send("invalid pet data");
     return;
   }
