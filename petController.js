@@ -115,16 +115,12 @@ export const updatePet = async (req, res, next) => {
     const pets = await pool.query(`SELECT * FROM petsTable WHERE id =$1`, [
       index,
     ]);
-    if (pets.rows.length === 0) {
+    if (pets.rows.length === 0 || !pets.rows[0]) {
       res.status(404).send("Not found");
-    }
-    if (!pets.rows[0]) {
-      res.status(404).send("Not found");
-      return;
     }
     const mergedPet = Object.assign({}, pets.rows[0], updatedPet);
     await pool.query(
-      `UPDATE petsTable SET name =$1, kind =$2, age =$3 WHERE id =$4`,
+      `UPDATE petsTable SET name =$1, kind =$2, age =$3 WHERE id =$4 RETURNING *`,
       [mergedPet.name, mergedPet.kind, mergedPet.age, index]
     );
     res.setHeader("Content-Type", "application/json").send(mergedPet);
